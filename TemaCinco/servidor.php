@@ -11,7 +11,28 @@ $server->register('agregarProducto', ['nombre' => 'xsd:string', 'precio' => 'xsd
 $server->register('actualizarProducto', ['id' => 'xsd:int', 'nombre' => 'xsd:string', 'precio' => 'xsd:float', 'stock' => 'xsd:int'], ['return' => 'xsd:string'], 'urn:ProductoService', 'urn:ProductoService#actualizarProducto', 'rpc', 'encoded', 'Actualiza un producto existente');
 $server->register('eliminarProducto', ['id' => 'xsd:int'], ['return' => 'xsd:string'], 'urn:ProductoService', 'urn:ProductoService#eliminarProducto', 'rpc', 'encoded', 'Elimina un producto por su ID');
 
+// funcion para verificar el token
+function verificarToken() {
+    global $server;
+    $expectedToken = hash('sha256', 'karold123'); // token cifrado esperado
+    
+    // Leer el token enviado en los headers
+    $headers = $server->requestHeaders;
+    
+    if (isset($headers['token'])) {
+        $receivedToken = $headers['token'];
+        if ($receivedToken === $expectedToken) {
+            return true; // token válido
+        }
+    }
+    return false; // token inválido
+}
+
 function obtenerProducto($id) {
+    if (!verificarToken()) {
+        return 'Token inválido';
+    }
+
     $conexion = new Conexion();
     $pdo = $conexion->getPDO();
 
@@ -23,6 +44,10 @@ function obtenerProducto($id) {
 }
 
 function agregarProducto($nombre, $precio, $stock) {
+    if (!verificarToken()) {
+        return 'Token inválido';
+    }
+
     $conexion = new Conexion();
     $pdo = $conexion->getPDO();
 
@@ -33,6 +58,10 @@ function agregarProducto($nombre, $precio, $stock) {
 }
 
 function actualizarProducto($id, $nombre, $precio, $stock) {
+    if (!verificarToken()) {
+        return 'Token inválido';
+    }
+
     $conexion = new Conexion();
     $pdo = $conexion->getPDO();
 
@@ -43,6 +72,10 @@ function actualizarProducto($id, $nombre, $precio, $stock) {
 }
 
 function eliminarProducto($id) {
+    if (!verificarToken()) {
+        return 'Token inválido';
+    }
+
     $conexion = new Conexion();
     $pdo = $conexion->getPDO();
 
@@ -52,6 +85,6 @@ function eliminarProducto($id) {
     return $resultado ? 'Producto eliminado exitosamente' : 'Error al eliminar el producto';
 }
 
-// Procesa solicitudes
+// Procesar solicitudes SOAP
 $server->service(file_get_contents("php://input"));
 ?>
